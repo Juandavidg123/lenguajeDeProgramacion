@@ -1,44 +1,60 @@
-from mips.mips import MIPSCodeGenerator
-from mips.lexer import tokenize
-from mips.parser import Parser
-from mips.interpreter import Interpreter
+import tkinter as tk
+from codificacion import codifcarCodigo
 
+def interfaz():
+    ventana = tk.Tk()
+    ventana.title("Ventana con TextField")
+    
+    ventana.state("zoomed")
+    
+    ventana.config(bg="#f0f0f0")
 
-def main():
-    def leer_archivo_txt(ruta_archivo):
-        try:
-            with open(ruta_archivo, 'r', encoding='utf-8') as archivo:
-                contenido = archivo.read()
-                return contenido
-        except FileNotFoundError:
-            print(f"El archivo {ruta_archivo} no se encontró.")
-        except Exception as e:
-            print(f"Ocurrió un error al leer el archivo: {e}")
+    frame_superior = tk.Frame(ventana, bg="#f0f0f0")
+    frame_superior.pack(fill="both", expand=True)
 
-    ruta = './comando.txt'
-    contenido = leer_archivo_txt(ruta)
-    if contenido:
-        pipeline = contenido.split('\n')
-        print(f"Código a interpretar: {pipeline}")
-        for code in pipeline:
+    text_field = tk.Text(frame_superior, font=("Arial", 12), wrap="word", borderwidth=2, relief="solid")
+    text_field.pack(expand=True, fill="both", padx=20, pady=20)
 
-            tokens_list = tokenize(code)
-            print("Tokens:", tokens_list)
+    frame_inferior = tk.Frame(ventana, bg="#f0f0f0")
+    frame_inferior.pack(fill="both", expand=True)
 
-            parser_instance = Parser(tokens_list)
-            ast = parser_instance.parse_operation()
-            print("AST:", ast)
+    resultado = tk.Text(frame_inferior, font=("Arial", 10), wrap="word", borderwidth=2, relief="solid", height=10)
+    resultado.pack(expand=True, fill="both", padx=20, pady=10)
 
-            interpreter_instance = Interpreter()
-            result = interpreter_instance.visit(ast)
-            print("Resultado de la interpretación:", result)
+    def mostrar_texto():
+        
+        resultado.config(state="normal")  
+        resultado.delete("1.0", "end")  
 
-            codegen = MIPSCodeGenerator()
-            codegen.generate(ast)
-            mips_code = codegen.get_code()
-            print("Código MIPS generado:")
-            print(mips_code)
+        texto = text_field.get("1.0", "end-1c")  
+        ejecucion, errores = codifcarCodigo(texto)  
+        
 
+        if ejecucion:
+            resultado.config(state="normal") 
+            
+            for linea in ejecucion:
+                resultado.insert("end", f"Tokens: {linea[0]}\n")
+                resultado.insert("end", f"AST: {linea[1]}\n")
+                resultado.insert("end", f"Resultado: {linea[2]}\n")
+                resultado.insert("end", f"Código MIPS:\n{linea[3]}\n")
+                resultado.insert("end", "-" * 40 + "\n")
+                
+            resultado.config(state="disabled")
+        elif errores:
+            resultado.insert("end", "Errores:\n")
+            for error in errores:
+                resultado.insert("end", f"{error}\n")
+        else:
+            resultado.insert("end", "No se generaron resultados.\n")
+            resultado.config(state="disabled")
 
-if __name__ == '__main__':
-    main()
+    boton = tk.Button(frame_inferior, text="Ejecutar", font=("Arial", 12), command=mostrar_texto,
+                      bg="#4CAF50", fg="white", activebackground="#45a049", activeforeground="white",
+                      borderwidth=0, padx=10, pady=5)
+    boton.pack(pady=10)
+
+    ventana.mainloop()
+    
+if __name__ == "__main__":
+    interfaz()
