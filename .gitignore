@@ -4,3 +4,8 @@ __pycache__
 # Virtual Environment
 venv/
 env/
+
+# Builder and executable
+dist/
+build/
+*.spec
